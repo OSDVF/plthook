@@ -591,7 +591,7 @@ static int plthook_open_real(plthook_t **plthook_out, struct link_map *lmap)
         set_errmsg("failed to find DT_SYMTAB");
         return PLTHOOK_INTERNAL_ERROR;
     }
-    plthook.dynsym = (const Elf_Sym*)(dyn_addr_base + dyn->d_un.d_ptr);
+    plthook.dynsym = (const Elf_Sym*)((size_t)dyn_addr_base + dyn->d_un.d_ptr);
 
     /* Check sizeof(Elf_Sym) */
     dyn = find_dyn_by_tag(lmap->l_ld, DT_SYMENT);
@@ -610,7 +610,7 @@ static int plthook_open_real(plthook_t **plthook_out, struct link_map *lmap)
         set_errmsg("failed to find DT_STRTAB");
         return PLTHOOK_INTERNAL_ERROR;
     }
-    plthook.dynstr = dyn_addr_base + dyn->d_un.d_ptr;
+    plthook.dynstr = (const char*)((size_t)dyn_addr_base + dyn->d_un.d_ptr);
 
     /* get .dynstr size */
     dyn = find_dyn_by_tag(lmap->l_ld, DT_STRSZ);
@@ -623,7 +623,7 @@ static int plthook_open_real(plthook_t **plthook_out, struct link_map *lmap)
     /* get .rela.plt or .rel.plt section */
     dyn = find_dyn_by_tag(lmap->l_ld, DT_JMPREL);
     if (dyn != NULL) {
-        plthook.rela_plt = (const Elf_Plt_Rel *)(dyn_addr_base + dyn->d_un.d_ptr);
+        plthook.rela_plt = (const Elf_Plt_Rel *)((size_t)dyn_addr_base + dyn->d_un.d_ptr);
         dyn = find_dyn_by_tag(lmap->l_ld, DT_PLTRELSZ);
         if (dyn == NULL) {
             set_errmsg("failed to find DT_PLTRELSZ");
@@ -637,7 +637,7 @@ static int plthook_open_real(plthook_t **plthook_out, struct link_map *lmap)
     if (dyn != NULL) {
         size_t total_size, elem_size;
 
-        plthook.rela_dyn = (const Elf_Plt_Rel *)(dyn_addr_base + dyn->d_un.d_ptr);
+        plthook.rela_dyn = (const Elf_Plt_Rel *)((size_t)dyn_addr_base + dyn->d_un.d_ptr);
         dyn = find_dyn_by_tag(lmap->l_ld, PLT_DT_RELSZ);
         if (dyn == NULL) {
             set_errmsg("failed to find PLT_DT_RELSZ");
@@ -735,7 +735,7 @@ static int check_rel(const plthook_t *plthook, const Elf_Plt_Rel *plt, Elf_Xword
             return PLTHOOK_INVALID_FILE_FORMAT;
         }
         *name_out = plthook->dynstr + idx;
-        *addr_out = (void**)(plthook->plt_addr_base + plt->r_offset);
+        *addr_out = (void**)((uint64_t)plthook->plt_addr_base + plt->r_offset);
         return 0;
     }
     return -1;
